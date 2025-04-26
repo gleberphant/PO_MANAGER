@@ -8,18 +8,29 @@
 DROP TABLE IF EXISTS "pessoas";
 CREATE TABLE IF NOT EXISTS "pessoas" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "nome" VARCHAR(200)
+    "nome" VARCHAR(200) UNIQUE
 );
+
+-- Índices para colunas frequentemente consultadas
+CREATE INDEX IF NOT EXISTS "idx_pessoas_nome" ON "pessoas" ("nome");
+
 
 /*  PESSOAS : todas as pessoas cadastradas */
 DROP TABLE IF EXISTS "proponentes";
 CREATE TABLE IF NOT EXISTS "proponentes" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "nome" VARCHAR(200),
+    "nome" VARCHAR(200) UNIQUE,
     "representante_id" INTEGER,
 
     FOREIGN KEY("representante_id") REFERENCES "pessoas"("id")
 );
+
+-- Índices para chaves estrangeiras
+CREATE INDEX IF NOT EXISTS "idx_proponentes_representante_id" ON "proponentes" ("representante_id");
+
+-- Índices para colunas frequentemente consultadas
+CREATE INDEX IF NOT EXISTS "idx_proponentes_nome" ON "proponentes" ("nome");
+
 
 /*  MEMBROS : membros trabalham em um produto. é um especialização de pessoas */
 DROP TABLE IF EXISTS "membros";
@@ -34,17 +45,29 @@ CREATE TABLE IF NOT EXISTS "membros"(
     FOREIGN KEY ("produto_id") REFERENCES "produtos"("id")
 );
 
+-- Índices para chaves estrangeiras
+CREATE INDEX IF NOT EXISTS "idx_membros_pessoa_id" ON "membros" ("pessoa_id");
+CREATE INDEX IF NOT EXISTS "idx_membros_funcao_id" ON "membros" ("funcao_id");
+CREATE INDEX IF NOT EXISTS "idx_membros_produto_id" ON "membros" ("produto_id");
+
 /*  PRODUTOS : entidade principal */
 DROP TABLE IF EXISTS "produtos";
 CREATE TABLE IF NOT EXISTS "produtos"(
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "nome" VARCHAR(200),
+    "nome" VARCHAR(200) UNIQUE,
     "descricao" TEXT,
+    "data_inicio" VARCHAR(30) DEFAULT '2025-01-01', --YYY-MM-DD
     "proponente_id" INTEGER NOT NULL,
-    "data_inicio" VARCHAR(30),
 
     FOREIGN KEY ("proponente_id") REFERENCES "proponentes"("id")
 );
+
+-- Índices para chaves estrangeiras
+CREATE INDEX IF NOT EXISTS "idx_produtos_proponente_id" ON "produtos" ("proponente_id");
+
+-- Índices para colunas frequentemente consultadas
+CREATE INDEX IF NOT EXISTS "idx_produtos_nome" ON "produtos" ("nome");
+
 
 /* ESCOPOS : os escopos  correspondem a grupos de funcionalidades  do produto. */
 DROP TABLE IF EXISTS "escopos";
@@ -57,23 +80,37 @@ CREATE TABLE IF NOT EXISTS "escopos"(
     FOREIGN KEY ("produto_id") REFERENCES "produtos"("id")
 );
 
-/* REQUISITOS : requisitos de um produto*/
+-- Índices para chaves estrangeiras
+CREATE INDEX IF NOT EXISTS "idx_escopos_produto_id" ON "escopos" ("produto_id");
+
+
+/* REQUISITOS : requisitos e estorias de um produto*/
 DROP TABLE IF EXISTS "requisitos";
 CREATE TABLE IF NOT EXISTS "requisitos"(
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "descricao" TEXT,
     "prioridade" VARCHAR(200) CHECK(prioridade IN ('alta', 'normal', 'baixa', 'urgente')),
-    "data_status" INTEGER,
+    "data_status" INTEGER DEFAULT '2025-01-01', --YYY-MM-DD
     "tipo_id" INTEGER, -- requisito se classifica em um tipo
     "status_id" INTEGER, -- status do pedido
     "escopo_id" INTEGER, -- requisito deve pertencer ao escopo de um produto
-    "produto_id" INTEGER, -- requisito deve pertencer a um produto ** verificar necessidade dessa coluna
-       
-    FOREIGN KEY ("produto_id")  REFERENCES "produtos"("id"),
+    -- "produto_id" INTEGER, -- descomentar apenas se requisito puder existir sem escopo       
+    -- FOREIGN KEY ("produto_id")  REFERENCES "produtos"("id"),
     FOREIGN KEY ("escopo_id") REFERENCES "escopos"("id"),
     FOREIGN KEY ("tipo_id") REFERENCES "tipos"("id"),
     FOREIGN KEY ("status_id") REFERENCES "status"("id")
 );
+
+-- Índices para chaves estrangeiras
+CREATE INDEX IF NOT EXISTS "idx_requisitos_tipo_id" ON "requisitos" ("tipo_id");
+CREATE INDEX IF NOT EXISTS "idx_requisitos_status_id" ON "requisitos" ("status_id");
+CREATE INDEX IF NOT EXISTS "idx_requisitos_escopo_id" ON "requisitos" ("escopo_id");
+-- CREATE INDEX IF NOT EXISTS "idx_requisitos_produto_id" ON "requisitos" ("produto_id"); 
+
+-- Índices para colunas frequentemente consultadas
+CREATE INDEX IF NOT EXISTS "idx_requisitos_prioridade" ON "requisitos" ("prioridade");
+CREATE INDEX IF NOT EXISTS "idx_requisitos_data_status" ON "requisitos" ("data_status");
+
 
 -- -------------------------------------------------------------------
 -- TABELAS DE REFERENCIA - 
@@ -83,7 +120,7 @@ CREATE TABLE IF NOT EXISTS "requisitos"(
 DROP TABLE IF EXISTS "funcoes";
 CREATE TABLE IF NOT EXISTS "funcoes"(
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "nome" VARCHAR(100),
+    "nome" VARCHAR(100) UNIQUE,
     "descricao" TEXT
 );
 
@@ -91,7 +128,7 @@ CREATE TABLE IF NOT EXISTS "funcoes"(
 DROP TABLE IF EXISTS "tipos";
 CREATE TABLE IF NOT EXISTS "tipos"(
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "nome" VARCHAR(200)
+    "nome" VARCHAR(200) UNIQUE
 );
 
 
@@ -99,7 +136,7 @@ CREATE TABLE IF NOT EXISTS "tipos"(
 DROP TABLE IF EXISTS "status";
 CREATE TABLE IF NOT EXISTS "status"(
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "nome" VARCHAR(50)
+    "nome" VARCHAR(50) UNIQUE
 );
 
 
@@ -116,18 +153,18 @@ VALUES
 
 INSERT INTO "tipos"("id", "nome")
 VALUES
-    (0, 'estoria usuário'),
-    (1, 'funcional'),
-    (2, 'não funcional'),
-    (3, 'interface');
+    (0, 'Estoria do usuário'),
+    (1, 'Funcional'),
+    (2, 'Não Funcional'),
+    (3, 'Interface');
 
 
 INSERT INTO "status"("id", "nome")
 VALUES
-    (0, 'pendente'),
-    (1, 'desenvolvimento'),
-    (2, 'revisao'),
-    (3, 'concluido');
+    (0, 'Pendente'),
+    (1, 'Desenvolvimento'),
+    (2, 'Revisao'),
+    (3, 'Concluido');
 
 
 -- -------------------------------------------------------------------
@@ -138,8 +175,8 @@ VALUES
 DROP VIEW IF EXISTS "lista_produtos";
 CREATE VIEW IF NOT EXISTS "lista_produtos" AS
     SELECT 
-        "produtos"."nome" AS 'produto',
-        "produtos"."descricao" AS 'descrição',
+        "produtos"."nome" AS '"produto"',
+        "produtos"."descricao" AS '"descrição"',
         "produtos"."data_inicio" AS 'inicio',
         "proponentes"."nome" AS 'proponente',
         "pessoas"."nome" AS 'representante'
@@ -152,15 +189,15 @@ CREATE VIEW IF NOT EXISTS "lista_produtos" AS
 DROP VIEW IF EXISTS "lista_requisitos";
 CREATE VIEW IF NOT EXISTS "lista_requisitos" AS
     SELECT
-        "produtos"."id" AS 'id_produto',
-        "requisitos"."id" AS 'id_requisito',
-        "produtos"."nome" AS 'produto',
-        "escopos"."nome" AS 'escopo',
-        "requisitos"."descricao" AS 'requisito',
-        "requisitos"."prioridade" AS 'prioridade',
-        "status"."nome" AS 'status',
-        "requisitos"."data_status" AS 'data_status',
-        "tipos"."nome" AS 'tipo'
+        "produtos"."id" AS "id_produto",
+        "requisitos"."id" AS "id_requisito",
+        "produtos"."nome" AS "produto",
+        "escopos"."nome" AS "escopo",
+        "requisitos"."descricao" AS "requisito",
+        "requisitos"."prioridade" AS "prioridade",
+        "status"."nome" AS "status",
+        "requisitos"."data_status" AS "data_status",
+        "tipos"."nome" AS "tipo"
         
         
     FROM "requisitos"
@@ -174,10 +211,10 @@ CREATE VIEW IF NOT EXISTS "lista_requisitos" AS
 DROP VIEW IF EXISTS "lista_membros";
 CREATE VIEW IF NOT EXISTS "lista_membros" AS
     SELECT 
-        "membros"."id" AS 'id_membro',
-        "pessoas"."nome" AS 'membro',
-        "funcoes"."nome" AS 'função',
-        "produtos"."nome" AS 'produto'
+        "membros"."id" AS "id_membro",
+        "pessoas"."nome" AS "membro",
+        "funcoes"."nome" AS "funcao",
+        "produtos"."nome" AS "produto"
     FROM "membros"
         JOIN "pessoas" ON "pessoas"."id" = "membros"."pessoa_id" 
         JOIN "funcoes" ON "funcoes"."id" = "membros"."funcao_id"
@@ -187,13 +224,13 @@ CREATE VIEW IF NOT EXISTS "lista_membros" AS
 DROP VIEW IF EXISTS "lista_escopos";
 CREATE VIEW IF NOT EXISTS "lista_escopos" AS 
     SELECT 
-        "escopos"."id" as 'id_escopo',
-        "produtos"."nome" as 'produto',
-        "escopos"."nome" AS 'escopo',
-        "escopos"."descricao" AS 'descrição'
+        "escopos"."id" as "id_escopo",
+        "produtos"."nome" as "produto",
+        "escopos"."nome" AS "escopo",
+        "escopos"."descricao" AS "descricao"
     FROM "escopos"
         JOIN "produtos" ON "produtos"."id" = "escopos"."produto_id"
-    ORDER BY 'produto';
+    ORDER BY "produto";
 -- -------------------------------------------------------------------
 -- INSERINDO DADOS TESTES 
 -- -------------------------------------------------------------------
@@ -218,9 +255,9 @@ VALUES
 -- inserções testes na tabela de produtos
 INSERT INTO "produtos" ("id","nome", "descricao", "data_inicio", "proponente_id")
 VALUES 
-    (0, 'Sis Demandas Corregedoria', 'descricao', '20/03/2025', 0),
-    (1, 'Sis Reserva DAL', 'descricao', '20/03/2025', 1),
-    (2, 'Sis Contratos DGA', 'descricao', '20/03/2025', 2);
+    (0, 'Sis Demandas Corregedoria', 'descricao', '2025-03-02', 0),
+    (1, 'Sis Reserva DAL', 'descricao', '2025-03-02', 1),
+    (2, 'Sis Contratos DGA', 'descricao', '2025-03-02', 2);
 
 -- inserções testes na tabela de membros
 INSERT INTO "membros" ("id", "pessoa_id", "funcao_id", "produto_id")
@@ -246,9 +283,9 @@ VALUES
     (5, 'Cadastro Contratos', 'CRUD de Contratos', 2 );
 
 -- inserções testes na tabela de requisitos
-INSERT INTO "requisitos" ("id", "descricao", "prioridade", "data_status", "tipo_id", "status_id", "produto_id", "escopo_id")
+INSERT INTO "requisitos" ("id", "descricao", "prioridade", "data_status", "tipo_id", "status_id", "escopo_id")
 VALUES
-    (0, 'cadastrar uma demanda da corregedoria', 'normal', '02/02/25', 0, 0, 0, 3 ),
-    (1, 'Registrar uma cautela no nome de um militar', 'normal', '02/02/25', 0, 0, 1, 4 ),
-    (2, 'cadastrar um contrato de serviço', 'normal', '02/02/25', 0, 0, 2, 5 ),
-    (3, 'designar um gestor para o contrato', 'normal', '02/02/25', 0, 0, 2, 5 );
+    (0, 'cadastrar uma demanda da corregedoria', 'normal', '2025-03-02', 0, 0, 3 ),
+    (1, 'Registrar uma cautela no nome de um militar', 'normal', '2025-03-02', 0, 0, 4 ),
+    (2, 'cadastrar um contrato de serviço', 'normal', '2025-03-02', 0, 0, 5 ),
+    (3, 'designar um gestor para o contrato', 'normal', '2025-03-02', 0, 0, 5 );
