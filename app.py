@@ -26,9 +26,10 @@ def insert_item():
 
 @app.route("/", methods=['GET'])
 def index():
-    # result = query_all_collection(connect_database())
-    result = db_manager.query_all_table()
-    return render_template("index.html.jinja", result=result)
+    
+
+    result_list = db_manager.query_products()
+    return render_template("index.html.jinja", result=result_list)
          
 
 if __name__ == "__main__":

@@ -1,0 +1,43 @@
+{% extends 'base.html.jinja' %}
+
+{% block content %}
+<h2> index.html</h2>
+
+<!-- MAIN TABLE  -->
+
+<div class="container text-center">  
+  <table class="table">
+    <thead>
+      <tr>
+        <th scope="col">#</th>
+        <th scope="col">Produto</th>
+        <th scope="col">Descrição</th>
+        <th scope="col">Inicio</th>
+        <th scope="col">Proponente</th>
+        <th scope="col">Representate</th>
+        <th scope="col">Menu</th>
+      </tr>
+    </thead>     
+      <!-- TABLE BODY  -->
+      <tbody>
+        {% for row in result %}
+        <tr>
+          <th scope="row">#</th>
+          <td>{{ row[0] }}</td>
+          <td>{{ row[1] }}</td>
+          <td>{{ row[2] }}</td>
+          <td>{{ row[3] }}</td>
+          <td>{{ row[4] }}</td>
+          <td>
+              <a class="btn btn-primary"> Visualizar </a>
+              <a class="btn btn-danger"> X </a>
+          </td>
+
+        </tr>
+        {% endfor %}
+
+      </tbody>
+  </table>
+</div>
+<!-- MAIN TABLE  -->
+{% endblock %}

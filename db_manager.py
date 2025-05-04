@@ -13,6 +13,23 @@ def connect_sqlite(url="database.db"):
         print(f"Erro ao conectar: {e}")
         return None # Retorna None em caso de erro
 
+
+def query_products():
+    """lista os produtos."""
+    connection = connect_sqlite()
+
+    if not connection:
+        print(f"erro de conexão")
+        return None
+    try:
+        cursor=  connection.cursor()
+        result = cursor.execute("SELECT * from lista_produtos")
+        result_list = [row for row in result]
+    except Exception as e:
+        print(f"Erro ao consultar : {e}")
+    finally:
+        return result_list
+
 def query_all_table():
     """Busca todos os registros da tabela requisitos."""
     result_list = []

@@ -5,6 +5,12 @@
             "driver": "SQLite",
             "name": "database.db",
             "database": "${workspaceFolder:PO_MANAGER}/database.db"
+        },
+        {
+            "name": "DuckDB",
+            "accessMode": "Read Only",
+            "previewLimit": 50,
+            "driver": "DuckDB"
         }
     ],
     "sqltools.useNodeRuntime": true
