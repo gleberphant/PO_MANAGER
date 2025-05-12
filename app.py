@@ -18,7 +18,7 @@ def insert_item():
         "prioridade": request.form["prioridade"]
     }
     
-    # db_manager.insert_data_sqlite(new_row)
+    # dbm.insert_data_sqlite(new_row)
     # get_collection(connect_database()).insert_one(new_doc)
 
     return redirect(url_for("index"))
@@ -27,7 +27,7 @@ def insert_item():
 @app.route("/", methods=['GET'])
 def index():
     
-    result_list = dbm.query_products()
+    result_list = dbm.query_all_products()
     return render_template("index.html.jinja", result=result_list)
          
 

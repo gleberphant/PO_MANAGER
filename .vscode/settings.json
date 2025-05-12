@@ -13,5 +13,6 @@
             "driver": "DuckDB"
         }
     ],
-    "sqltools.useNodeRuntime": true
+    "sqltools.useNodeRuntime": true,
+    "cSpell.language": "en, pt,pt_BR"
 }
